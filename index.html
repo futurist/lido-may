@@ -10,48 +10,41 @@
   </head>
   <body>
   <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
-  <script type='text/javascript' src='t.min.js'></script>
+  <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
 
     <canvas id="myCanvas" width="578" height="600" style="background:#eee;"></canvas>
     <script>
 
+//global var
 
 var move = 1;
 
 var canvas = document.querySelector("#myCanvas");
 
-
-function createNoisyEasing(randomProportion, easingFunction) {
-    var normalProportion = 1.0 - randomProportion;
-    var This = this;
-    return function(k) {
-        This.process = k;
-        return randomProportion * Math.random() + normalProportion * easingFunction(k);
+function imageLoad(img) {
+    if (!img.complete) {
+        return false;
     }
+
+    if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) {
+        return false;
+    }
+    return true;
 }
+var imgPath=['phone-1.png'];
+var imgObj={};
+imgPath.forEach(function(v){
+	var img = new Image();
+	img.src = v;
+	img.onload=function(){
+		imgObj[v] = img;
+		if( Object.keys(imgObj).length == imgPath.length ){
+			init();
+		}
+	}
+});
 
-var config = {
-    x: canvas.width / 2,
-    y: -175,
-    rotate: 0,
-    width: 46,
-    height: 88,
-    rotate: 0
-};
-
-var tween = new TWEEN.Tween(config)
-    .to({
-        y: [canvas.height],
-        x: config.x + -20+ Math.random()*40 ,
-        rotate: 360
-    }, 2500)
-    .easing(createNoisyEasing.call(config, 0, TWEEN.Easing.Exponential.In))
-    .start();
-
-tween.onUpdate(drawRectangle);
-
-
-
+// draw Animation using tween object 
 function drawRectangle() {
 
 	if(!bitmap)return;
@@ -80,6 +73,11 @@ function drawRectangle() {
     }
 }
 
+
+
+
+
+//init center pos and stage, add background
 var centerPos = {x:267, y:401};
 
 var stage, bg, bitmap;
@@ -89,64 +87,98 @@ bg = new createjs.Bitmap("bg.jpg");
 stage.addChild(bg);
 
 
-
+// add center dot
  var graphics = new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4);
  var shape = new createjs.Shape(graphics);
- shape.alpha=0;
+ shape.alpha=1;
  stage.addChild( shape );
 
+
+// add hero bitmap 
+var t1;
 function init(e){
 
-	bitmap = new createjs.Bitmap("phone-1.png");
+	bitmap = new createjs.Bitmap( imgObj["phone-1.png"] );
 	bitmap.alpha = 0.5;
 
 	bitmap.scaleX = bitmap.scaleY = 0.5;
 	stage.addChild(bitmap);
 
-	TWEEN.update();
+	var b =bitmap.getBounds();
 
+    if(b){
+    	bitmap.regX = b.width/2;
+    	bitmap.regY = b.height/2;
+    	bitmap.scaleX = bitmap.scaleY = 0.5;
+    	bitmap.x = canvas.width/2;
+	}
+	t1 = createjs.Tween.get(bitmap, {paused:true, position:300, onChange: function(){
+
+	}}).to({ y: canvas.height }, 1500, createjs.Ease.getPowOut(2) ).call(function(){ 
+
+	});
 }
 
-init();
+
+//Request Animation Frame
+var startTime=new Date();
+
+window.requestAnimFrame = (function(callback) {
+    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+        function(callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+})();
+
+function animate() {
+    requestAnimFrame(animate);
+    handleTick();
+}
+animate();
 
 
-
- createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
- createjs.Ticker.addEventListener("tick", handleTick);
- function handleTick(event) {
+//Handle every tick
+function handleTick(event) {
  	if(!move)return;
      stage.update();
- 	 TWEEN.update( createjs.Ticker.getTime() + 1500 );
- }
+
+     if(typeof t1=='undefined') return;
+     var d = new Date() - startTime;
+     if(!clicked) t1.setPosition( t1.position+d );
+     startTime = new Date();
+}
 
 
- var bgCanvas = document.createElement('canvas');
- bgCanvas.width = 322;
- bgCanvas.height = 286;
 
+
+// click to calc score
+var clicked = false;
 
 function clickHandle(e,data) {
 	if(!move) return;
-	var dx = shape.x-centerPos.x;
-	var dy = shape.y-centerPos.y;
+	clicked = true;
+	t1.setPaused(true);
+	var b =bitmap.getBounds();
+	var center = bitmap.localToLocal(b.width/2, b.height/2, stage);
+	var dx = center.x-centerPos.x;
+	var dy = center.y-centerPos.y;
 	var ds = 2* Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
 	var score = Math.max(0, 160-ds);
 	console.log( score );
 	move=0;
-	createjs.Ticker.removeAllEventListeners();
-	tween.onUpdate(function(){});
-	tween.stop();
-	TWEEN.removeAll();
 
 	saveImage();
-	bg.off("click", clickHandle);
 }
 bg.on("click", clickHandle );
 
 
+//save snapshot of the canvas, and display
+
 function saveImage(){
 
-
+	 var bgCanvas = document.createElement('canvas');
+	 bgCanvas.width = 322;
+	 bgCanvas.height = 286;
 
 	var bgContext = bgCanvas.getContext('2d');
 	bgContext.drawImage(myCanvas, // source
