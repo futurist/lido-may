@@ -1,0 +1,174 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+  <body>
+  <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
+  <script type='text/javascript' src='t.min.js'></script>
+
+    <canvas id="myCanvas" width="578" height="600" style="background:#eee;"></canvas>
+    <script>
+
+
+var move = 1;
+
+var canvas = document.querySelector("#myCanvas");
+
+
+function createNoisyEasing(randomProportion, easingFunction) {
+    var normalProportion = 1.0 - randomProportion;
+    var This = this;
+    return function(k) {
+        This.process = k;
+        return randomProportion * Math.random() + normalProportion * easingFunction(k);
+    }
+}
+
+var config = {
+    x: canvas.width / 2,
+    y: -175,
+    rotate: 0,
+    width: 46,
+    height: 88,
+    rotate: 0
+};
+
+var tween = new TWEEN.Tween(config)
+    .to({
+        y: [canvas.height],
+        x: config.x + -20+ Math.random()*40 ,
+        rotate: 360
+    }, 2500)
+    .easing(createNoisyEasing.call(config, 0, TWEEN.Easing.Exponential.In))
+    .start();
+
+tween.onUpdate(drawRectangle);
+
+
+
+function drawRectangle() {
+
+	if(!bitmap)return;
+    
+    if(move==0){
+    	return;
+    }
+
+
+    if (this.y < canvas.height - this.height) {
+        
+        bitmap.x = this.x;
+        bitmap.y = this.y;
+        var b =bitmap.getBounds();
+        if(b){
+        	bitmap.regX = b.width/2;
+        	bitmap.regY = b.height/2;
+        	var center = bitmap.localToLocal(b.width/2, b.height/2, stage);
+        	shape.x = center.x;
+        	shape.y = center.y;
+    	}
+        bitmap.rotation = this.rotate;
+
+    } else {
+        move = 0;
+    }
+}
+
+var centerPos = {x:267, y:401};
+
+var stage, bg, bitmap;
+
+stage = new createjs.Stage(canvas);
+bg = new createjs.Bitmap("bg.jpg");
+stage.addChild(bg);
+
+
+
+ var graphics = new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4);
+ var shape = new createjs.Shape(graphics);
+ shape.alpha=0;
+ stage.addChild( shape );
+
+function init(e){
+
+	bitmap = new createjs.Bitmap("phone-1.png");
+	bitmap.alpha = 0.5;
+
+	bitmap.scaleX = bitmap.scaleY = 0.5;
+	stage.addChild(bitmap);
+
+	TWEEN.update();
+
+}
+
+init();
+
+
+
+ createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+ createjs.Ticker.addEventListener("tick", handleTick);
+ function handleTick(event) {
+ 	if(!move)return;
+     stage.update();
+ 	 TWEEN.update( createjs.Ticker.getTime() + 1500 );
+ }
+
+
+ var bgCanvas = document.createElement('canvas');
+ bgCanvas.width = 322;
+ bgCanvas.height = 286;
+
+
+function clickHandle(e,data) {
+	if(!move) return;
+	var dx = shape.x-centerPos.x;
+	var dy = shape.y-centerPos.y;
+	var ds = 2* Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+	var score = Math.max(0, 160-ds);
+	console.log( score );
+	move=0;
+	createjs.Ticker.removeAllEventListeners();
+	tween.onUpdate(function(){});
+	tween.stop();
+	TWEEN.removeAll();
+
+	saveImage();
+	bg.off("click", clickHandle);
+}
+bg.on("click", clickHandle );
+
+
+function saveImage(){
+
+
+
+	var bgContext = bgCanvas.getContext('2d');
+	bgContext.drawImage(myCanvas, // source
+	                    166, 306,   // source coordinates
+	                    322, 286,   // source dimension
+	                    0, 0,       // target coordinates
+	                    322, 286);  // target dimensions
+
+
+	console.log( bgCanvas.toDataURL() );
+	var simg = new Image();
+	simg.src= bgCanvas.toDataURL();
+
+	bit = new createjs.Bitmap(simg);
+	bit.x=bit.y=0;
+	stage.addChild(bit);
+	stage.update();
+}
+
+
+
+    </script>
+
+  </body>
+</html>
