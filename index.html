@@ -1,10 +1,12 @@
 <!DOCTYPE HTML>
 <html>
   <head>
+  	<meta name="viewport" content="width=640,user-scalable=no">
     <style>
       body {
         margin: 0px;
         padding: 0px;
+        background: #000 url(images/2-bg.jpg) no-repeat;
       }
     </style>
   </head>
@@ -12,7 +14,7 @@
   <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
   <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
 
-    <canvas id="myCanvas" width="578" height="600" style="background:#eee;"></canvas>
+    <canvas id="myCanvas" width="640" height="1008" style="background:#eee;"></canvas>
     <script>
 
 //global var
@@ -21,13 +23,28 @@ var move = 1;
 
 var canvas = document.querySelector("#myCanvas");
 
-var imgPath=['phone-1.png'];
+var imgPath=[
+'1-begin.png',
+'1-up.png',
+'2-bg.jpg',
+'2-mu.png',
+'3-bg.jpg',
+'3-q1.png',
+'3-q2.png',
+'pai.png',
+'q1.png',
+'q2.png',
+'rule.jpg',
+'wei.png',
+'zhong.png'
+ ];
 var imgObj={};
 imgPath.forEach(function(v){
 	var img = new Image();
-	img.src = v;
+	img.src = "images/"+v;
 	img.onload=function(){
 		imgObj[v] = img;
+
 		if( Object.keys(imgObj).length == imgPath.length ){
 			init();
 		}
@@ -43,26 +60,36 @@ var centerPos = {x:267, y:401};
 var stage, bg, bitmap;
 
 stage = new createjs.Stage(canvas);
-bg = new createjs.Bitmap("bg.jpg");
-stage.addChild(bg);
 
+bg = new createjs.Bitmap("images/1-bg.jpg");
+//stage.addChild(bg);
 
 // add center dot
- var graphics = new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4);
- var shape = new createjs.Shape(graphics);
+ var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
  shape.alpha=1;
  stage.addChild( shape );
 
+function addClip(path, x,y,w,h){
+	var shape = new createjs.Shape();
+	shape.graphics.drawRect(x,y,w,h);
+
+	var obj = new createjs.Bitmap( imgObj[path] );
+	obj.mask = shape;
+	
+	stage.addChild(obj);
+	return obj;
+}
 
 // add hero bitmap 
 var t1;
 function init(e){
 
-	bitmap = new createjs.Bitmap( imgObj["phone-1.png"] );
-	bitmap.alpha = 0.5;
+	var begin = addClip("2-bg.jpg", 0, 648 , 640 , 88);
+	var upload = addClip("1-up.png", 0, 543 , 640 , 88);
+	console.log(begin.getBounds());
 
-	bitmap.scaleX = bitmap.scaleY = 0.5;
-	stage.addChild(bitmap);
+	bitmap = stage.addChild( new createjs.Bitmap( imgObj["q1.png"] ) ); 
+	
 
 	var b =bitmap.getBounds();
 
