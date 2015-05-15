@@ -62,19 +62,25 @@ var stage, bg, bitmap;
 stage = new createjs.Stage(canvas);
 
 bg = new createjs.Bitmap("images/1-bg.jpg");
-//stage.addChild(bg);
+stage.addChild(bg);
 
 // add center dot
- var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
- shape.alpha=1;
- stage.addChild( shape );
+var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
+shape.alpha=0;
+stage.addChild( shape );
 
 function addClip(path, x,y,w,h){
+	
 	var shape = new createjs.Shape();
 	shape.graphics.drawRect(x,y,w,h);
 
+	var shape2 = new createjs.Shape();
+	shape2.graphics.beginFill('#ff0000').drawRect(x,y,w,h);
+
+
 	var obj = new createjs.Bitmap( imgObj[path] );
 	obj.mask = shape;
+	obj.hitArea = shape2;
 	
 	stage.addChild(obj);
 	return obj;
@@ -82,11 +88,13 @@ function addClip(path, x,y,w,h){
 
 // add hero bitmap 
 var t1;
-function init(e){
+function init(){
 
-	var begin = addClip("2-bg.jpg", 0, 648 , 640 , 88);
-	var upload = addClip("1-up.png", 0, 543 , 640 , 88);
-	console.log(begin.getBounds());
+	var begin = addClip("1-begin.png", 100, 648 , 440 , 88);
+	var upload = addClip("1-up.png", 100, 543 , 440 , 88);
+
+	upload.on("click", uploadFile )
+	begin.on("click", gotoStage2 )
 
 	bitmap = stage.addChild( new createjs.Bitmap( imgObj["q1.png"] ) ); 
 	
@@ -104,6 +112,14 @@ function init(e){
 	}}).to({ y: canvas.height }, 1500, createjs.Ease.getPowOut(2) ).call(function(){ 
 
 	});
+}
+
+
+function uploadFile (e) {
+	alert(111);
+}
+function gotoStage2 (e) {
+	alert(222);
 }
 
 
