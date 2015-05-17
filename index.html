@@ -8,14 +8,92 @@
         padding: 0px;
         background: #000 url(images/2-bg.jpg) no-repeat;
       }
+      .hide{
+      	opacity: 0;
+      	position: absolute;
+      	left: 100px;
+      	top:560px;
+      }
+      #form input{
+      	width: 440px;
+      	height: 88px;
+      	line-height: 88px;
+      	border: 1px solid red;
+      	background: red;
+      }
+      #upmsg{
+      	display: none;
+      	position: absolute;
+      	left: 0px;
+      	top:560px;
+      	width: 100%;
+      	text-align: center;
+      	color: white;
+      	font:28px/88px Arial;
+      }
     </style>
+    <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
+    <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
+    <script type='text/javascript' src='zepto.min.js'></script>
   </head>
   <body>
-  <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
-  <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
 
-    <canvas id="myCanvas" style="background:#eee;"></canvas>
+  <form id="form" class="hide">
+  <input id="sortpicture" type="file" name="sortpic" />
+</form>
+<img style="display:none" id="imgPlace">
+<div id="upmsg">后台上传中，可以先开始噢</div>
+
+<canvas id="myCanvas" style="background:#eee;"></canvas>
+
+<div class="phbg regCon" style="background-color:rgba(0,0,0,0.8); width:100%; height:100%; position:fixed; top:0; left:0; z-index: 999999; display:none; ">
+			<div id="" class="reg" align="center" style="width: 460px; margin:auto;color: white;padding-top: 50px;">
+				<div style="padding: 20px 0; font-size: 28px;font-weight: bold;" class="regTitle">提交你的个人信息以便派发礼品</div>
+				<div style="padding: 10px 0;"><span style="padding: 0px 10px;">姓名</span><input type="text" name="name" style="width:240px;"></div>
+				<div style="padding: 10px 0;"><span style="padding: 0px 10px;">电话</span><input type="text" name="phone" style="width:240px;"></div>
+				<div style="padding: 10px 0;"><span style="padding: 0px 10px;">地址</span><textarea name="address" style="width:240px; vertical-align:top;"></textarea></div>
+				<div style="padding: 30px 0;"><img class="regbtn" src="images/btn_ok.png" width="284" height="74" border="0" alt=""></div>
+			</div>
+</div>
     <script>
+
+
+function uperror(msg) {
+	msg = msg || "有错误发生，请重试";
+	$("#upmsg").text(msg);
+	$("#upmsg").click(function(){
+		$("#upmsg").hide();
+		$("#form").show();
+		upload.visible=true;
+	});
+}
+function upfile() {
+	$("#upmsg").show();
+	$("#form").hide();
+	upload.visible=false;
+    var file_data = $('#sortpicture').prop('files')[0];   
+    var form_data = new FormData();                  
+    form_data.append('file', file_data);
+    $.ajax({
+                url: 'data/upload.php', // point to server-side PHP script 
+                dataType: 'json',  // what to expect back from the PHP script, if anything
+                cache: false,
+                contentType: false,
+                processData: false,
+                data: form_data,                         
+                type: 'post',
+                success: function(res){
+                    if(!res.error){
+                    	localStorage.setItem("lido_may_filename", res.filename);
+                    	$('#imgPlace').attr('src', 'uploads/'+res.filename);
+                    }else{
+                    	uperror( res.error );
+                    }
+                },
+                error:uperror
+     });
+};
+$('#sortpicture').change(upfile)
 
 //global var
 
@@ -102,11 +180,6 @@ function init(){
 	upload.on("click", uploadFile )
 	begin.on("click", gotoStage2 )
 
-	gotoStage2()
-
-
-
-
 
 
 }
@@ -136,6 +209,7 @@ function uploadFile (e) {
 
 function gotoStage2 (e) {
 
+	$("#upmsg").hide();
 	stage.removeChild(bg, begin, upload);
 
 	bg2 = new createjs.Bitmap( imgObj["2-bg.jpg"] );
@@ -143,7 +217,7 @@ function gotoStage2 (e) {
 	pai = new createjs.Bitmap( imgObj["pai.png"] );
 	stage.addChild(bg2, mu2, pai);
 
-	bg2.on("click", clickHandle );
+	pai.on("click", clickHandle );
 
 	
 	runBitmap();
@@ -165,7 +239,7 @@ function runBitmap(){
     	bitmap.rotation=-70*Math.random();
 	}
 	
-	t1 = createjs.Tween.get(bitmap, {paused:true, override:true} ).to({ y: canvas.height, rotation: 600 }, 2500, createjs.Ease.getPowOut(2) ).call(function(){ });
+	t1 = createjs.Tween.get(bitmap, {paused:true, override:true} ).to({ y: canvas.height, rotation: 600 }, 2500, createjs.Ease.getPowOut(2) ).call(clickHandle);
 	t1.setPosition(200);
 	startTime= new Date();
 }
@@ -229,7 +303,7 @@ function clickHandle(e,data) {
 	console.log(ds, score );
 
 	move=0;
-
+	createjs.Tween.removeAllTweens();
 
 	saveImage();
 }
@@ -313,7 +387,7 @@ function saveImage(){
 	scoreBit.y = 660;
 
 	t2 = createjs.Tween.get(snapshot).to({y: snapshot.y-20,rotation:(10-20*Math.random()), scaleX:0.8, scaleY:0.8}, 500).call(showScore);
-	t3 = createjs.Tween.get(bgMask, {override:true}).to({alpha: 0.3}, 500);
+	t3 = createjs.Tween.get(bgMask).to({alpha: 0.3}, 500);
 	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, 500);
 	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, 500);
 
@@ -322,17 +396,17 @@ function saveImage(){
 function showScore(){
 	if(score<60){
 		msgBit = new createjs.Bitmap( imgObj['wei.png'] );
+		stage.addChild(msgBit);
 		msgBit.y = 720;
 		msgBit.alpha=0;
-		stage.addChild(msgBit);
-		createjs.Tween.get(msgBit, {override:true}).to({alpha: 1}, 500);
+		createjs.Tween.get(msgBit).to({alpha: 1}, 500);
 
 		msgBit.on("click", function(){
 			stage.removeChild(snapshot, scoreBit, msgBit);
 			pai.visible = true;
 			pai.alpha = 0;
-			createjs.Tween.get(pai, {override:true}).to({alpha: 1}, 500).call(function(){});
-			createjs.Tween.get(bgMask, {override:true}).to({alpha: 0}, 500).call(function(){
+			createjs.Tween.get(pai).to({alpha: 1}, 500).call(function(){});
+			createjs.Tween.get(bgMask).to({alpha: 0}, 500).call(function(){
 				move=1;
 				bitmap.alpha=1;
 				bitmap.y = -500;
@@ -352,14 +426,82 @@ function showScore(){
 }
 
 function gotoStage3(){
+	localStorage.setItem("lido_may_score", score);
+	localStorage.setItem("lido_may_cupon", cupon);
+
 	stage.removeChild(snapshot, scoreBit, msgBit);
+	
+	picCon = new createjs.Container();
+	picCon.x=127;
+	picCon.y=213;
+
 	bg3 = new createjs.Bitmap( imgObj['3-bg.jpg'] );
-	stage.addChild(bg3);
+	cuponBit = new createjs.Bitmap( imgObj['q'+cupon+'.png'] );
+	cuponBit.x=241;
+	cuponBit.y=375;
+	
+	stage.addChild(bg3,picCon,cuponBit);
+
+	var filename = localStorage.getItem('lido_may_filename');
+	if(filename){
+		var img=new Image();
+		img.onload=function () {
+			picBit = new createjs.Bitmap( img );
+			picCon.addChild(picBit);
+			var r = 246/img.height;
+			picBit.scaleX=picBit.scaleY=r;
+			var b=picCon.getBounds();
+			picCon.x = 320- b.width/2;
+		}
+		img.src= 'uploads/'+filename;
+		
+	}
+
+
+
 }
 
 
+
+var submitting = false;
+$('.regbtn').click(function(){
+  var s = localStorage.getItem("lido_may_saved");
+  if(s=="1"){
+	alert("您已提交过信息了。");
+	return;
+  }
+  if(submitting) return;
+  var tel = $.trim( $('input[name=phone]').val() ); //获取手机号
+  var address = $.trim( $('[name=address]').val() ); //获取手机号
+  
+  if( $('input[name=name]').val()=="" || $('input[name=phone]').val()=="" || address=="" ){
+	alert("请填写完整信息后提交");return;
+  }
+	if( ! (/^(0|86|17951)?(1[3-9][0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/).test(tel) && ! (/^１[０１２３４５６７８９]{10}$/).test(tel)  ){
+		alert("请填写正确的手机号");return;
+	  }
+	  submitting = true;
+	  $('input[name=name]').attr("disabled","disabled");
+	  $('input[name=phone]').attr("disabled","disabled");
+	  $('[name=address]').attr("disabled","disabled");
+$.post("data/reg.php", {award: cupon==1?"名单券":"代金券", name:$('input[name=name]').val(), phone:$('input[name=phone]').val(),  address: address }, function(data){
+	if(data>0){
+		alert("您的电话已有记录，活动结束后工作人员会尽快联系您");
+		return;
+	}
+	 var date = new Date(); date.setTime(date.getTime() + (999999 * 60 * 1000));
+	localStorage.setItem("lido_may_saved", "1");
+	alert("恭喜，提交成功。");
+	$('.regCon').hide();
+		$('input[name=name]').removeAttr("disabled");
+	  $('input[name=phone]').removeAttr("disabled");
+	  $('[name=address]').removeAttr("disabled");
+	  gotoStage3();
+});
+});
 function showReg(){
-	gotoStage3();
+	$('.regCon').show();
+	
 }
 
     </script>
