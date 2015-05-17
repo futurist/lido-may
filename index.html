@@ -1,7 +1,11 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-  	<meta name="viewport" content="width=640,user-scalable=no">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=640,user-scalable=no">
+  <meta name="apple-mobile-web-app-status-bar-style" content="blank" />
+  <meta name="format-detection" content="telephone=no" />
+
     <style>
       body {
         margin: 0px;
@@ -31,6 +35,33 @@
       	color: white;
       	font:28px/88px Arial;
       }
+      body, button, input, select, textarea {
+        font: 12px/1.5 tahoma, arial, \5b8b\4f53;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      button, input, select, textarea {
+        font-size: 100%;
+      }
+      .txtpyq {
+        display: none;
+        text-align: right;
+        position: absolute;
+        width: 100%;
+        right: 0;
+        top: 0;
+        z-index: 300000000000;
+      }
+      .bg {
+        display: none;
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 20000000;
+      }
     </style>
     <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
     <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
@@ -55,6 +86,13 @@
 				<div style="padding: 30px 0;"><img class="regbtn" src="images/btn_ok.png" width="284" height="74" border="0" alt=""></div>
 			</div>
 </div>
+
+<div class="bg"></div>
+<div class="txtpyq"><img src="images/txt_pyq.png" alt=""></div>
+
+
+<a href="#" class="tellfriend" style="position:absolute; left:158px;  top:874px; width:280px; height:70px;"></a>
+
     <script>
 
 
@@ -134,7 +172,7 @@ imgPath.forEach(function(v){
 });
 
 
-
+createjs.Ticker.timingMode = createjs.Ticker.RAF;
 
 //init center pos and stage, add background
 
@@ -209,7 +247,7 @@ function uploadFile (e) {
 
 function gotoStage2 (e) {
 
-	$("#upmsg").hide();
+	$("#upmsg,#form").hide();
 	stage.removeChild(bg, begin, upload);
 
 	bg2 = new createjs.Bitmap( imgObj["2-bg.jpg"] );
@@ -278,6 +316,7 @@ function handleTick(event) {
 // click to calc score
 var score,  bgMask, scoreBit, snapshot;
 var centerPos = {x:320, y:399};
+var msgBit, cuponBit,picCon;
 
 function clickHandle(e,data) {
 	if(!move) return;
@@ -341,13 +380,14 @@ var scoreData = {
 	}
 }
 
+var bgCanvas = document.createElement('canvas');
+bgCanvas.width = 510;
+bgCanvas.height = 503;
+var bgContext = bgCanvas.getContext('2d');
+
+
 function saveImage(){
 
-	 var bgCanvas = document.createElement('canvas');
-	 bgCanvas.width = 510;
-	 bgCanvas.height = 503;
-
-	var bgContext = bgCanvas.getContext('2d');
 	bgContext.drawImage(myCanvas, // source
 	                    71, 149,   // source coordinates
 	                    510, 503,   // source dimension
@@ -388,8 +428,8 @@ function saveImage(){
 
 	t2 = createjs.Tween.get(snapshot).to({y: snapshot.y-20,rotation:(10-20*Math.random()), scaleX:0.8, scaleY:0.8}, 500).call(showScore);
 	t3 = createjs.Tween.get(bgMask).to({alpha: 0.3}, 500);
-	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, 500);
-	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, 500);
+	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, 0);
+	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, 0);
 
 }
 
@@ -398,8 +438,7 @@ function showScore(){
 		msgBit = new createjs.Bitmap( imgObj['wei.png'] );
 		stage.addChild(msgBit);
 		msgBit.y = 720;
-		msgBit.alpha=0;
-		createjs.Tween.get(msgBit).to({alpha: 1}, 500);
+		//createjs.Tween.get(msgBit).to({alpha: 1}, 0);
 
 		msgBit.on("click", function(){
 			stage.removeChild(snapshot, scoreBit, msgBit);
@@ -468,7 +507,7 @@ $('.regbtn').click(function(){
   var s = localStorage.getItem("lido_may_saved");
   if(s=="1"){
 	alert("您已提交过信息了。");
-	return;
+	//return;
   }
   if(submitting) return;
   var tel = $.trim( $('input[name=phone]').val() ); //获取手机号
@@ -503,6 +542,14 @@ function showReg(){
 	$('.regCon').show();
 	
 }
+
+$('.tellfriend').click(function(e){
+	e.preventDefault();
+	$(".bg,.txtpyq").show();
+});
+$(".bg,.txtpyq").click(function  () {
+	$(".bg,.txtpyq").hide();
+});
 
     </script>
 
