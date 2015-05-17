@@ -14,7 +14,7 @@
   <script type='text/javascript' src='easeljs-0.8.0.min.js'></script>
   <script type='text/javascript' src='tweenjs-0.6.0.min.js'></script>
 
-    <canvas id="myCanvas" width="640" height="1008" style="background:#eee;"></canvas>
+    <canvas id="myCanvas" style="background:#eee;"></canvas>
     <script>
 
 //global var
@@ -22,6 +22,9 @@
 var move = 1;
 
 var canvas = document.querySelector("#myCanvas");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 
 var imgPath=[
 '1-begin.png',
@@ -35,6 +38,7 @@ var imgPath=[
 'q1.png',
 'q2.png',
 'rule.jpg',
+'score.png',
 'wei.png',
 'zhong.png'
  ];
@@ -55,7 +59,6 @@ imgPath.forEach(function(v){
 
 
 //init center pos and stage, add background
-var centerPos = {x:267, y:401};
 
 var stage, bg, bitmap;
 
@@ -65,9 +68,7 @@ bg = new createjs.Bitmap("images/1-bg.jpg");
 stage.addChild(bg);
 
 // add center dot
-var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
-shape.alpha=0;
-stage.addChild( shape );
+var shape;
 
 function addClip(path, x,y,w,h){
 	
@@ -88,40 +89,86 @@ function addClip(path, x,y,w,h){
 
 // add hero bitmap 
 var t1;
+var cupon;
+var begin;
+var upload;
+var uploadBar;
+var uploadBar2;
 function init(){
 
-	var begin = addClip("1-begin.png", 100, 648 , 440 , 88);
-	var upload = addClip("1-up.png", 100, 543 , 440 , 88);
+	begin = addClip("1-begin.png", 100, 648 , 440 , 88);
+	upload = addClip("1-up.png", 100, 543 , 440 , 88);
 
 	upload.on("click", uploadFile )
 	begin.on("click", gotoStage2 )
 
-	bitmap = stage.addChild( new createjs.Bitmap( imgObj["q1.png"] ) ); 
+	gotoStage2()
+
+
+
+
+
+
+}
+
+
+
+function updateBar (p) {
+
+
+	stage.removeChild(uploadBar2);
+  uploadBar2= stage.addChild( new createjs.Shape(  
+		new createjs.Graphics()
+		.beginFill("#FF3333")
+		.drawRoundRect(200,590, 240*p,22, 11)  ) );
+
+	stage.addChild(uploadBar2);
+}
+
+function uploadFile (e) {
+	var uploadBar = stage.addChild( new createjs.Shape(  
+		new createjs.Graphics()
+		.beginFill("#FFFFFF")
+		.drawRoundRect(200,590, 240,22, 11)  ) ); 
+	e.target.visible = false;
+	updateBar(.1);
+}
+
+function gotoStage2 (e) {
+
+	stage.removeChild(bg, begin, upload);
+
+	bg2 = new createjs.Bitmap( imgObj["2-bg.jpg"] );
+	mu2 = new createjs.Bitmap( imgObj["2-mu.png"] );
+	pai = new createjs.Bitmap( imgObj["pai.png"] );
+	stage.addChild(bg2, mu2, pai);
+
+	bg2.on("click", clickHandle );
+
 	
+	runBitmap();
+}
+
+
+function runBitmap(){
+	stage.removeChild(bitmap);
+	cupon = Math.random()<0.3?1:2;
+	bitmap = stage.addChild( new createjs.Bitmap( imgObj["q"+cupon+".png"] ) ); 
 
 	var b =bitmap.getBounds();
 
     if(b){
     	bitmap.regX = b.width/2;
     	bitmap.regY = b.height/2;
-    	bitmap.scaleX = bitmap.scaleY = 0.5;
     	bitmap.x = canvas.width/2;
+    	bitmap.y = -500;
+    	bitmap.rotation=-70*Math.random();
 	}
-	t1 = createjs.Tween.get(bitmap, {paused:true, position:300, onChange: function(){
-
-	}}).to({ y: canvas.height }, 1500, createjs.Ease.getPowOut(2) ).call(function(){ 
-
-	});
+	
+	t1 = createjs.Tween.get(bitmap, {paused:true, override:true} ).to({ y: canvas.height, rotation: 600 }, 2500, createjs.Ease.getPowOut(2) ).call(function(){ });
+	t1.setPosition(200);
+	startTime= new Date();
 }
-
-
-function uploadFile (e) {
-	alert(111);
-}
-function gotoStage2 (e) {
-	alert(222);
-}
-
 
 //Request Animation Frame
 var startTime=new Date();
@@ -142,12 +189,12 @@ animate();
 
 //Handle every tick
 function handleTick(event) {
- 	if(!move)return;
-     if(typeof t1=='undefined') return;
-     var d = new Date() - startTime;
-     t1.setPosition( t1.position+d );
-     startTime = new Date();
-     
+
+ 	if(move && t1){
+ 		var d= new Date()-startTime;
+ 		t1.setPosition( t1.position + d  );
+ 		startTime = new Date();
+ 	}
      stage.update();
 }
 
@@ -155,51 +202,165 @@ function handleTick(event) {
 
 
 // click to calc score
+var score,  bgMask, scoreBit, snapshot;
+var centerPos = {x:320, y:399};
 
 function clickHandle(e,data) {
 	if(!move) return;
-	t1.setPaused(true);
+	if(pai.alpha<1) return;
+
+	var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
+	shape.alpha=1;
+	//stage.addChild( shape );
+
+	bgMask = new createjs.Shape(  new createjs.Graphics().beginFill("#000000").drawRect(0, 0, window.innerWidth, window.innerHeight)  );
+	bgMask.alpha=0;
+	stage.addChild( bgMask );
+
 	var b =bitmap.getBounds();
 	var center = bitmap.localToLocal(b.width/2, b.height/2, stage);
 	var dx = center.x-centerPos.x;
 	var dy = center.y-centerPos.y;
-	var ds = 2* Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-	var score = Math.max(0, 160-ds);
-	console.log( score );
+	shape.x = center.x;
+	shape.y=center.y;
+	var ds = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+
+	score = Math.max(0, 170-ds);
+	console.log(ds, score );
+
 	move=0;
+
 
 	saveImage();
 }
-bg.on("click", clickHandle );
 
 
 //save snapshot of the canvas, and display
 
+var scoreData = {
+	images:['images/score.png'],
+	frames:[
+		[0,0,131,36],
+		[131,0,17,36],
+		[148,0,25,36],
+		[173,0,24,36],
+		[197,0,24,36],
+		[221,0,25,36],
+		[246,0,24,36],
+		[270,0,24,36],
+		[294,0,24,36],
+		[318,0,25,36],
+		[343,0,24,36],
+	],
+	animations:{
+		"S":0,
+		"1":1,
+		"2":2,
+		"3":3,
+		"4":4,
+		"5":5,
+		"6":6,
+		"7":7,
+		"8":8,
+		"9":9,
+		"0":10,
+	}
+}
+
 function saveImage(){
 
 	 var bgCanvas = document.createElement('canvas');
-	 bgCanvas.width = 322;
-	 bgCanvas.height = 286;
+	 bgCanvas.width = 510;
+	 bgCanvas.height = 503;
 
 	var bgContext = bgCanvas.getContext('2d');
 	bgContext.drawImage(myCanvas, // source
-	                    166, 306,   // source coordinates
-	                    322, 286,   // source dimension
+	                    71, 149,   // source coordinates
+	                    510, 503,   // source dimension
 	                    0, 0,       // target coordinates
-	                    322, 286);  // target dimensions
+	                    510, 503);  // target dimensions
 
 
-	console.log( bgCanvas.toDataURL() );
 	var simg = new Image();
 	simg.src= bgCanvas.toDataURL();
 
 	bit = new createjs.Bitmap(simg);
-	bit.x=bit.y=0;
-	stage.addChild(bit);
-	stage.update();
+	bit.regX=510/2;
+	bit.regY=503/2;
+	bit.x = 3+bit.regX;
+	bit.y = 3+bit.regY;
+
+	var border = new createjs.Shape( new createjs.Graphics().setStrokeStyle(6).beginStroke("#990000").drawRect(0,0,510+6,503+6) );
+
+
+	snapshot = new createjs.Container();
+	snapshot.addChild(bit,border);
+	snapshot.regX=510/2+6;
+	snapshot.regY=503/2+6;
+	snapshot.x=71-6+snapshot.regX;
+	snapshot.y=149-6+snapshot.regY;
+
+
+	stage.addChild(snapshot);
+
+
+	scoreSheet = new createjs.SpriteSheet(scoreData);
+	scoreBit = new createjs.BitmapText("S"+ ~~score, scoreSheet);
+	stage.addChild(scoreBit);
+
+	var sb=scoreBit.getBounds();
+	scoreBit.x = canvas.width/2 - sb.width/2;
+	scoreBit.y = 660;
+
+	t2 = createjs.Tween.get(snapshot).to({y: snapshot.y-20,rotation:(10-20*Math.random()), scaleX:0.8, scaleY:0.8}, 500).call(showScore);
+	t3 = createjs.Tween.get(bgMask, {override:true}).to({alpha: 0.3}, 500);
+	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, 500);
+	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, 500);
+
+}
+
+function showScore(){
+	if(score<60){
+		msgBit = new createjs.Bitmap( imgObj['wei.png'] );
+		msgBit.y = 720;
+		msgBit.alpha=0;
+		stage.addChild(msgBit);
+		createjs.Tween.get(msgBit, {override:true}).to({alpha: 1}, 500);
+
+		msgBit.on("click", function(){
+			stage.removeChild(snapshot, scoreBit, msgBit);
+			pai.visible = true;
+			pai.alpha = 0;
+			createjs.Tween.get(pai, {override:true}).to({alpha: 1}, 500).call(function(){});
+			createjs.Tween.get(bgMask, {override:true}).to({alpha: 0}, 500).call(function(){
+				move=1;
+				bitmap.alpha=1;
+				bitmap.y = -500;
+				bitmap.visible = true;
+				runBitmap();
+			});
+
+		});
+	} else{
+		msgBit = new createjs.Bitmap( imgObj['zhong.png'] );
+		stage.addChild(msgBit);
+		msgBit.y = 720;
+		msgBit.on("click", function(){
+			showReg();
+		});
+	}
+}
+
+function gotoStage3(){
+	stage.removeChild(snapshot, scoreBit, msgBit);
+	bg3 = new createjs.Bitmap( imgObj['3-bg.jpg'] );
+	stage.addChild(bg3);
 }
 
 
+function showReg(){
+	gotoStage3();
+}
 
     </script>
 
