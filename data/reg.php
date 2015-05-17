@@ -33,7 +33,7 @@ $regCount = q1("select count(*) from reg_may where phone='$phone' ");
 $regCount = reset($regCount);
 
 if($regCount==0){
-	q("insert into reg_may (name,phone, address, openid, ip, dtime, award) values( '$name', '$phone', '$address', '$openid', '$ip', '$date', $award) ");
+	q("insert into reg_may (name,phone, address, openid, ip, dtime, award) values( '$name', '$phone', '$address', '$openid', '$ip', '$date', '$award') ");
 }
 
 $reg = q1("select count(*) from reg_may");

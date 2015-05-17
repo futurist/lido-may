@@ -2,6 +2,7 @@
 <html>
   <head>
   <meta charset="UTF-8">
+  <title>北京丽都维景酒店#拍照抢免单#活动</title>
   <meta name="viewport" content="width=640,user-scalable=no">
   <meta name="apple-mobile-web-app-status-bar-style" content="blank" />
   <meta name="format-detection" content="telephone=no" />
@@ -30,6 +31,25 @@
       	position: absolute;
       	left: 0px;
       	top:560px;
+      	width: 100%;
+      	text-align: center;
+      	color: white;
+      	font:28px/88px Arial;
+      }
+      #loading{
+      	position: absolute;
+      	left: 0px;
+      	top:600px;
+      	width: 100%;
+      	text-align: center;
+      	color: white;
+      	font:28px/88px Arial;
+      }
+      #cuponMsg{
+      	display: none;
+      	position: absolute;
+      	left: 0px;
+      	top:290px;
       	width: 100%;
       	text-align: center;
       	color: white;
@@ -72,7 +92,10 @@
   <form id="form" class="hide">
   <input id="sortpicture" type="file" name="sortpic" />
 </form>
+<img style="display:none" src="images/1-bg.jpg">
 <img style="display:none" id="imgPlace">
+<div id="cuponMsg">照片上传中...</div>
+<div id="loading">加载中，请稍候</div>
 <div id="upmsg">后台上传中，可以先开始噢</div>
 
 <canvas id="myCanvas" style="background:#eee;"></canvas>
@@ -91,7 +114,9 @@
 <div class="txtpyq"><img src="images/txt_pyq.png" alt=""></div>
 
 
-<a href="#" class="tellfriend" style="position:absolute; left:158px;  top:874px; width:280px; height:70px;"></a>
+<a href="#" class="guanzhu" style="display:none; position:absolute; left:158px;  top:658px; width:280px; height:70px; background:none;"></a>
+<a href="#" class="chakanyouhui" style="display:none; position:absolute; left:158px;  top:765px; width:280px; height:70px; background:none;"></a>
+<a href="#" class="tellfriend" style="display:none; position:absolute; left:158px;  top:874px; width:280px; height:70px;"></a>
 
     <script>
 
@@ -108,6 +133,7 @@ function uperror(msg) {
 function upfile() {
 	$("#upmsg").show();
 	$("#form").hide();
+
 	upload.visible=false;
     var file_data = $('#sortpicture').prop('files')[0];   
     var form_data = new FormData();                  
@@ -142,6 +168,19 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 
+createjs.Ticker.timingMode = createjs.Ticker.RAF;
+
+//init center pos and stage, add background
+
+var stage, bg, bitmap;
+
+stage = new createjs.Stage(canvas);
+
+bg = new createjs.Bitmap("images/1-bg.jpg");
+stage.addChild(bg);
+
+
+
 var imgPath=[
 '1-begin.png',
 '1-up.png',
@@ -166,22 +205,14 @@ imgPath.forEach(function(v){
 		imgObj[v] = img;
 
 		if( Object.keys(imgObj).length == imgPath.length ){
+			$("#loading").hide();
 			init();
+			//gotoStage3();
 		}
 	}
 });
 
 
-createjs.Ticker.timingMode = createjs.Ticker.RAF;
-
-//init center pos and stage, add background
-
-var stage, bg, bitmap;
-
-stage = new createjs.Stage(canvas);
-
-bg = new createjs.Bitmap("images/1-bg.jpg");
-stage.addChild(bg);
 
 // add center dot
 var shape;
@@ -203,6 +234,17 @@ function addClip(path, x,y,w,h){
 	return obj;
 }
 
+
+
+function imageLoad(img) {
+    if (!img.complete) {
+        return false;
+    }
+    if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) {
+        return false;
+    }
+    return true;
+}
 // add hero bitmap 
 var t1;
 var cupon;
@@ -465,6 +507,8 @@ function showScore(){
 }
 
 function gotoStage3(){
+
+
 	localStorage.setItem("lido_may_score", score);
 	localStorage.setItem("lido_may_cupon", cupon);
 
@@ -477,14 +521,26 @@ function gotoStage3(){
 	bg3 = new createjs.Bitmap( imgObj['3-bg.jpg'] );
 	cuponBit = new createjs.Bitmap( imgObj['q'+cupon+'.png'] );
 	cuponBit.x=241;
-	cuponBit.y=375;
+	cuponBit.y=288;
+	cuponBit.visible = false;
 	
 	stage.addChild(bg3,picCon,cuponBit);
 
+	showPic();
+
+	$('.chakanyouhui').show();
+	$('.guanzhu').show();
+	$('.tellfriend').show();
+
+}
+
+function showPic(){
 	var filename = localStorage.getItem('lido_may_filename');
-	if(filename){
+	if(filename && imageLoad( $('#imgPlace').get(0) ) ) {
+		$('#cuponMsg').hide();
 		var img=new Image();
 		img.onload=function () {
+			picLoad = true;
 			picBit = new createjs.Bitmap( img );
 			picCon.addChild(picBit);
 			var r = 246/img.height;
@@ -493,13 +549,11 @@ function gotoStage3(){
 			picCon.x = 320- b.width/2;
 		}
 		img.src= 'uploads/'+filename;
-		
+	}else{
+		$('#cuponMsg').show();
+		setTimeout(function(){showPic()}, 300);
 	}
-
-
-
 }
-
 
 
 var submitting = false;
@@ -542,7 +596,15 @@ function showReg(){
 	$('.regCon').show();
 	
 }
+$('.guanzhu').click(function(e){
+	window.location = "http://mp.weixin.qq.com/s?__biz=MjM5NDgxNTgyMQ==&mid=203261420&idx=1&sn=49df2149ee02e1d1ab2cddf7c8927c86#rd";
+});
 
+$('.chakanyouhui').click(function(e){
+	picCon.visible = false;
+	cuponBit.visible = true;
+	$('#cuponMsg').hide();
+});
 $('.tellfriend').click(function(e){
 	e.preventDefault();
 	$(".bg,.txtpyq").show();
