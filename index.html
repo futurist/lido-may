@@ -3,7 +3,7 @@
   <head>
   <meta charset="UTF-8">
   <title>北京丽都维景酒店#拍照抢免单#活动</title>
-  <meta name="viewport" content="width=640,user-scalable=no">
+  <meta name="viewport" content="width=640, user-scalable=no">
   <meta name="apple-mobile-web-app-status-bar-style" content="blank" />
   <meta name="format-detection" content="telephone=no" />
 
@@ -11,6 +11,9 @@
     	html,body{
     		height: 100%;
     	}
+
+    	body{min-width: 640px; max-width: 640px;}
+
       body {
         margin: 0px;
         padding: 0px;
@@ -115,6 +118,8 @@
 
 <canvas id="myCanvas" style="background:none;z-index:10"></canvas>
 <canvas id="myCanvas2" style="background:none;z-index:20"></canvas>
+<canvas id="myCanvas21" style="background:none;z-index:21"></canvas>
+<canvas id="myCanvas22" style="background:none;z-index:22"></canvas>
 <canvas id="myCanvas3" style="background:none;z-index:30"></canvas>
 
 <div class="phbg regCon" style="background-color:rgba(0,0,0,0.8); width:100%; height:100%; position:fixed; top:0; left:0; z-index: 999999; display:none; ">
@@ -136,6 +141,8 @@
 <a href="#" class="tellfriend" style="display:none; position:absolute; left:158px;  top:874px; width:280px; height:70px;"></a>
 
     <script>
+
+var iOS = /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
 
 
 function uperror(msg) {
@@ -185,8 +192,10 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 var canvas2 = document.querySelector("#myCanvas2");
-canvas2.width = window.innerWidth;
-canvas2.height = window.innerHeight;
+var canvas21 = document.querySelector("#myCanvas21");
+var canvas22 = document.querySelector("#myCanvas22");
+canvas2.width = canvas21.width = canvas22.width = window.innerWidth;
+canvas2.height =canvas21.height = canvas22.height =  window.innerHeight;
 
 var canvas3 = document.querySelector("#myCanvas3");
 canvas3.width = window.innerWidth;
@@ -202,9 +211,20 @@ var stage, bg, bitmap;
 stage = new createjs.Stage(canvas);
 stage2 = new createjs.Stage(canvas2);
 stage3 = new createjs.Stage(canvas3);
+stage21 = new createjs.Stage("myCanvas21");
+stage22 = new createjs.Stage("myCanvas22");
 
 $(canvas2).hide();
 $(canvas3).hide();
+$(canvas21).hide();
+$(canvas22).hide();
+
+
+createjs.Touch.enable(stage);
+createjs.Touch.disable(stage);
+createjs.Touch.enable(stage2);
+createjs.Touch.disable(stage2);
+
 
 var curStage = 1;
 
@@ -283,6 +303,9 @@ var upload;
 var uploadBar;
 var uploadBar2;
 var scoreData;
+
+
+//init 
 function init(){
 
 	begin = addClip("1-begin.png", 100, 648 , 440 , 88);
@@ -320,6 +343,8 @@ scoreData = {
 		"0":10,
 	}
 }
+
+stage.update();
 
 
 }
@@ -388,21 +413,25 @@ animate();
 //Handle every tick
 function handleTick(event) {
 
- 	if(move && t1){
+ 	if(move && t1 && t1._paused ){
  		var d= new Date()-startTime;
  		t1.setPosition( t1.position + d  );
  		startTime = new Date();
+
  	}
-    if(curStage==1) stage.update();
-    if(curStage==2) stage2.update();
-    if(curStage==3) stage3.update();
+
+ 	if(t1 && t1.position<t1.duration){
+	 	if(curStage==1) stage.update();
+	 	if(curStage==2) stage2.update();
+	 	if(curStage==3) stage3.update();
+	 }
 }
 
 
 
 function runBitmap(){
 	mu2.visible = true;
-	stage2.removeChild(bitmap);
+	if( bitmap ) bitmap.visible = false;
 	cupon = Math.random()<0.3?1:2;
 	bitmap = stage2.addChild( new createjs.Bitmap( imgObj["q"+cupon+".png"] ) ); 
 
@@ -430,20 +459,17 @@ function clickHandle(e,data) {
 	if(!move) return;
 	if(pai.alpha<1) return;
 
-	var shape = new createjs.Shape(  new createjs.Graphics().beginFill("#ff0000").drawCircle(0, 0, 4)  );
-	shape.alpha=1;
-	//stage.addChild( shape );
-
-	bgMask = new createjs.Shape(  new createjs.Graphics().beginFill("#000000").drawRect(0, 0, window.innerWidth, window.innerHeight)  );
-	bgMask.alpha=0;
-	stage2.addChild( bgMask );
+	if(!bgMask){
+		bgMask = new createjs.Shape(  new createjs.Graphics().beginFill("#000000").drawRect(0, 0, window.innerWidth, window.innerHeight)  );
+		bgMask.alpha=0;
+		stage2.addChild( bgMask );
+	}
 
 	var b =bitmap.getBounds();
 	var center = bitmap.localToLocal(b.width/2, b.height/2, stage);
 	var dx = center.x-centerPos.x;
 	var dy = center.y-centerPos.y;
-	shape.x = center.x;
-	shape.y=center.y;
+
 	var ds = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
 
 	score = Math.max(0, 170-ds);
@@ -497,35 +523,59 @@ function saveImage(){
 	stage2.addChild(snapshot);
 	mu2.visible = false;
 
+	if(scoreBit) scoreBit.visible = false;
+
 	scoreSheet = new createjs.SpriteSheet(scoreData);
-	score=183;
+
 	scoreBit = new createjs.BitmapText("S"+ ~~score, scoreSheet);
-	stage2.addChild(scoreBit);
+	scoreBit.on("added",function  () {
+		var sb=scoreBit.getBounds();
+		scoreBit.x = canvas.width/2 - sb.width/2;
+		scoreBit.y = 660;
 
-	var sb=scoreBit.getBounds();
-	scoreBit.x = canvas.width/2 - sb.width/2;
-	scoreBit.y = 660;
+		$(canvas21).show();
+		stage21.update();
+	});
+	stage21.addChild(scoreBit);
 
-	t2 = createjs.Tween.get(snapshot).to({y: snapshot.y-20,rotation:(10-20*Math.random()), scaleX:0.8, scaleY:0.8}, 500).call(showScore);
-	t3 = createjs.Tween.get(bgMask).to({alpha: 0.3}, 500);
-	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, 0);
-	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, 0);
+	
 
+
+	t1 = createjs.Tween.get(snapshot).to({y: snapshot.y-20,rotation:(10-20*Math.random()), scaleX:0.8, scaleY:0.8}, 500).call(
+		function(){ setTimeout(function(){showScore();},100)     } );
+	if(iOS) createjs.Tween.get(bgMask).to({alpha: 0.3}, 500);
+
+	createjs.Tween.get(bitmap, {override:true}).to({alpha: 0}, iOS?500:0);
+	createjs.Tween.get(pai, {override:true}).to({alpha: 0}, iOS?500:0);
+
+	
 }
 
 function showScore(){
+
+	if(msgBit) msgBit.visible = false;
+
 	if(score<60){
 		msgBit = new createjs.Bitmap( imgObj['wei.png'] );
-		stage2.addChild(msgBit);
-		msgBit.y = 720;
+		msgBit.on("added", function(){ 
+			msgBit.y = 720;
+			$(canvas22).show();
+			stage22.update();
+		});
+		stage22.addChild(msgBit);
 		//createjs.Tween.get(msgBit).to({alpha: 1}, 0);
 
 		msgBit.on("click", function(){
-			stage2.removeChild(snapshot, scoreBit, msgBit);
+			stage2.removeChild(snapshot);
+						
+			$(canvas21).hide();
+			$(canvas22).hide();
+
+			mu2.visible = true;
 			pai.visible = true;
 			pai.alpha = 0;
-			createjs.Tween.get(pai).to({alpha: 1}, 500).call(function(){});
-			createjs.Tween.get(bgMask).to({alpha: 0}, 500).call(function(){
+			createjs.Tween.get(bgMask).to({alpha: 0}, 500).call(function(){});
+			t1 = createjs.Tween.get(pai).to({alpha: 1}, 500).call(function(){
 				move=1;
 				bitmap.alpha=1;
 				bitmap.y = -500;
@@ -536,7 +586,12 @@ function showScore(){
 		});
 	} else{
 		msgBit = new createjs.Bitmap( imgObj['zhong.png'] );
-		stage2.addChild(msgBit);
+		msgBit.on("added", function(){ 
+			msgBit.y = 720;
+			$(canvas22).show();
+			stage22.update();
+		});
+		stage22.addChild(msgBit);
 		msgBit.y = 720;
 		msgBit.on("click", function(){
 			showReg();
