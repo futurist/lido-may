@@ -1,5 +1,5 @@
 <?php
-
+	error_reporting(0);
     if ( 0 < $_FILES['file']['error'] ) {
         echo json_encode( array("error"=> $_FILES['file']['error'] ) );
     }
