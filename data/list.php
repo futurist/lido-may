@@ -17,7 +17,7 @@ mysqli_query($con,"SET NAMES utf8");
 
 $table = mysqli_real_escape_string($con, $_GET['table']);
 $tableName = "";
-if($table=="reg"){ $tableName="注册用户"; }
+if($table=="reg_may"){ $tableName="注册用户"; }
 else if($table=="share"){ $tableName="转发情况"; }
 else{ exit(); }
 
@@ -88,7 +88,11 @@ foreach($data as $row)
 	echo "<tr style='font-family: 微软雅黑;'>";
 	foreach($colNames as $colName)
 	{
-		echo "<td style='font-family: 微软雅黑;'>".$row[$colName]."</td>";
+		if($colName=="photo"){
+			echo "<td style='font-family: 微软雅黑;'><a href='../uploads/{$row[$colName]}' target=_blank>".$row[$colName]."</a></td>";
+		}else{
+			echo "<td style='font-family: 微软雅黑;'>".$row[$colName]."</td>";
+		}
 	}
 	echo "</tr>";
 }

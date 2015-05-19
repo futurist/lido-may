@@ -23,6 +23,7 @@ $phone = $POST["phone"];
 $address = $POST["address"];
 $openid = $POST["openid"];
 $award = $POST["award"];
+$photo = $POST["photo"];
 
 $date = date("Y-m-d H:i:s");
 $time = time();
@@ -33,7 +34,7 @@ $regCount = q1("select count(*) from reg_may where phone='$phone' ");
 $regCount = reset($regCount);
 
 if($regCount==0){
-	q("insert into reg_may (name,phone, address, openid, ip, dtime, award) values( '$name', '$phone', '$address', '$openid', '$ip', '$date', '$award') ");
+	q("insert into reg_may (name,phone, address, openid, ip, dtime, photo, award) values( '$name', '$phone', '$address', '$openid', '$ip', '$date', '$photo', '$award') ");
 }
 
 $reg = q1("select count(*) from reg_may");
